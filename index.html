@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lucky Draw Challenge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  text-align: center;
+  padding: 20px;
+}
+h1 { color: #222; }
+table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 80%;
+  background: white;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+th {
+  background: #333;
+  color: white;
+}
+button {
+  padding: 12px 25px;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 20px;
+}
+#winner {
+  font-size: 22px;
+  margin-top: 20px;
+  font-weight: bold;
+  color: green;
+}
+.notice {
+  color: #555;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<h1>🎉 Lucky Draw Challenge 🎉</h1>
+
+<p class="notice">
+Public & Transparent Draw<br>
+Weighted by total entries
+</p>
+
+<button id="drawBtn">🎯 DRAW WINNER</button>
+
+<div id="winner"></div>
+
+<h2>📋 Participant Entries</h2>
+<table id="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Total Entries</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/1G0xA_IeccEMvauy95w-W19rxEVY-sQpSEQ24-LqhAuM/edit?usp=sharing";
+const drawKey = "luckyDrawResult";
+
+let participants = [];
+
+fetch(CSV_URL)
+  .then(res => res.text())
+  .then(text => {
+    const rows = text.trim().split("\n").slice(1);
+    rows.forEach(row => {
+      const [name, count] = row.split(",");
+      participants.push({
+        name: name.trim(),
+        count: parseInt(count)
+      });
+    });
+    renderTable();
+    checkPreviousDraw();
+  });
+
+function renderTable() {
+  const tbody = document.querySelector("#table tbody");
+  participants.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${p.name}</td><td>${p.count}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function weightedDraw() {
+  let pool = [];
+  participants.forEach(p => {
+    for (let i = 0; i < p.count; i++) pool.push(p.name);
+  });
+
+  const seed = Date.now();
+  const winner = pool[Math.floor(Math.random() * pool.length)];
+
+  const result = {
+    winner,
+    seed,
+    time: new Date().toLocaleString()
+  };
+
+  localStorage.setItem(drawKey, JSON.stringify(result));
+  displayWinner(result);
+  disableButton();
+}
+
+function displayWinner(result) {
+  document.getElementById("winner").innerHTML = `
+    🏆 Winner: ${result.winner}<br>
+    ⏰ Draw Time: ${result.time}<br>
+    🔢 Random Seed: ${result.seed}
+  `;
+}
+
+function disableButton() {
+  document.getElementById("drawBtn").disabled = true;
+  document.getElementById("drawBtn").innerText = "DRAW COMPLETED";
+}
+
+function checkPreviousDraw() {
+  const saved = localStorage.getItem(drawKey);
+  if (saved) {
+    displayWinner(JSON.parse(saved));
+    disableButton();
+  }
+}
+
+document.getElementById("drawBtn").onclick = weightedDraw;
+</script>
+
+</body>
+</html>

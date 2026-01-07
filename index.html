@@ -79,10 +79,16 @@ fetch(CSV_URL)
   .then(text => {
     const rows = text.trim().split("\n").slice(1);
     rows.forEach(row => {
-      const [name, count] = row.split(",");
-      participants.push({
-        name: name.trim(),
-        count: parseInt(count)
+  const cols = row.split(",");
+
+  const name = cols[2];   // Column C
+  const count = cols[15]; // Column P
+
+  if (!name || !count) return;
+
+  participants.push({
+    name: name.trim(),
+    count: parseInt(count)
       });
     });
     renderTable();
